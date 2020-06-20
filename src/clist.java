@@ -6,7 +6,7 @@ import java.util.LinkedList;
 public class clist {
 
     public String name;
-    private LinkedList<item> items;
+    public LinkedList<item> items;
 
     public clist(String name){
         this.name = name;
@@ -18,15 +18,16 @@ public class clist {
     /** Adds a new item to the checklist
      * @param name the name of the item
      */
-    public void addItem(String name){
+    public boolean addItem(String name){
         for (item i : this.items){
             if (i.name.equals(name)){
                 //skip duplicate names
-                return;
+                return false;
             }
         }
 
-        this.items.add(new item(name));
+        this.items.add(new item(name.trim()));
+        return true;
     }
 
     /** Removes all checked items
@@ -42,5 +43,12 @@ public class clist {
      */
     public void removall(){
         this.items = new LinkedList<item>();
+    }
+
+    /** Returns the last item contained in this checklist
+     * @return returns the last item contained in this checklist
+     */
+    public item getLast(){
+        return this.items.getLast();
     }
 }
