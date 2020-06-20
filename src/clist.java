@@ -32,6 +32,15 @@ public class clist {
     /** Removes all checked items
      */
     public void removeChecked(){
+        if (this.items.isEmpty()){
+            return;
+        }
         this.items.removeIf(i -> i.checked);
+    }
+
+    /** Removes all items
+     */
+    public void removall(){
+        this.items = new LinkedList<item>();
     }
 }
