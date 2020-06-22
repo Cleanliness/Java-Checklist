@@ -155,12 +155,15 @@ class clistWindow extends Frame{
      * @param name name of the checklist that has been selected
      * @param selClist the checklist that has been selected
      */
+
     clistWindow(String name, clist selClist){
         //setting up gui
         //checklist window
         setSize(400,700);
         this.setTitle(name);
         this.setLayout(null);
+
+        Panel chPanel = new Panel(new GridLayout(0,1));
 
         //instantiating buttons
         Button newItemButton = new Button("add");
@@ -180,9 +183,6 @@ class clistWindow extends Frame{
         bPanel.add(searchButton);
         this.add(bPanel);
 
-        //checkbox panel
-        Panel chPanel = new Panel(new GridLayout(0,1));
-
         //checkbox scrollpane
         ScrollPane t = new ScrollPane();
         t.setBounds(10, 130, 380, 530);
@@ -190,10 +190,7 @@ class clistWindow extends Frame{
         this.add(t);
 
         //loading in items from the checklist
-        for (item i : selClist.items){
-            chPanel.add(new Checkbox(i.name));
-        }
-
+        this.loadItems();
 
         //defining button behaviours
         //closing window
@@ -209,7 +206,39 @@ class clistWindow extends Frame{
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (selClist.addItem(itemField.getText().trim())){
-                    chPanel.add(new Checkbox(selClist.getLast().name));
+                    Checkbox cbox = new Checkbox(selClist.getLast().name);
+                    chPanel.add(cbox);
+                    cbox.addItemListener(new ItemListener() {
+                        @Override
+                        public void itemStateChanged(ItemEvent e) {
+                            selClist.getLast().check();
+                            System.out.println(selClist.getLast().name +  " has been checked");
+                        }
+                    });
+
+                    //refresh checkbox panel
+                    chPanel.validate();
+                }
+            }
+        });
+
+        //remove checked items from checklist, refresh layout
+        delChecked.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                selClist.removeChecked();
+                chPanel.removeAll();
+
+                for(item i : selClist.items){
+                    Checkbox cbox = new Checkbox(i.name);
+                    cbox.addItemListener(new ItemListener() {
+                        @Override
+                        public void itemStateChanged(ItemEvent e) {
+                            i.check();
+                            System.out.println(i.name +  "has been checked");
+                        }
+                    });
+                    chPanel.add(cbox);
                     chPanel.revalidate();
                 }
             }
@@ -218,4 +247,11 @@ class clistWindow extends Frame{
         setVisible(true);
     }
 
+
+    /** Loads in items from selected checklist
+     *
+     */
+    private void loadItems(){
+
+    }
 }
