@@ -1,6 +1,11 @@
+import sun.applet.Main;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -12,11 +17,12 @@ import java.util.ArrayList;
 public class MainApp {
     final static int WINDOW_WIDTH = 600;
     final static int WINDOW_HEIGHT = 800;
+
     public static List cl_list = new List(12, false);
     public static Frame f = new Frame();
     public static String lastItem = "";
     public static int lastItemIndex = -1;
-    public static ArrayList<clist> checklists = new ArrayList<clist>();
+    public static ClistManager manager = new ClistManager();
 
     public static void main(String[] args){
         //setting up gui (frame, button)
@@ -27,13 +33,23 @@ public class MainApp {
 
         //add checklist button
         Button addButton = new Button("Add Checklist");
-        addButton.setBounds(WINDOW_WIDTH/4 - 50,WINDOW_HEIGHT/12,100,30);
+        addButton.setBounds(WINDOW_WIDTH/4 - 100,WINDOW_HEIGHT/12,100,30);
         f.add(addButton);
 
         //delete checklist button
         Button delButton = new Button("Delete checklist");
-        delButton.setBounds(WINDOW_WIDTH/2 - 50, WINDOW_HEIGHT/12, 100, 30);
+        delButton.setBounds(WINDOW_WIDTH/2 - 140, WINDOW_HEIGHT/12, 100, 30);
         f.add(delButton);
+
+        //load from file button
+        Button loadButton = new Button("Load");
+        loadButton.setBounds(WINDOW_WIDTH - WINDOW_WIDTH/4 -40, WINDOW_HEIGHT/12, 70, 30);
+        f.add(loadButton);
+
+        //save button
+        Button saveButton = new Button("Save");
+        saveButton.setBounds(WINDOW_WIDTH - WINDOW_WIDTH/8 - 40, WINDOW_HEIGHT/12, 70, 30);
+        f.add(saveButton);
 
         //checklist list
         cl_list.setBounds(WINDOW_WIDTH/2 - WINDOW_WIDTH*7/16, 100, WINDOW_WIDTH*7/8, WINDOW_HEIGHT*6/7);
@@ -41,7 +57,7 @@ public class MainApp {
         f.add(cl_list);
 
         //defining button behaviour
-        //adding a checklist
+        //clicking add checklist button
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -55,7 +71,7 @@ public class MainApp {
             public void actionPerformed(ActionEvent e) {
                 if (cl_list.getSelectedItem() != null){
                     cl_list.remove(cl_list.getSelectedItem());
-                    checklists.remove(lastItemIndex);
+                    manager.checklists.remove(lastItemIndex);
                 }
             }
         });
@@ -73,7 +89,57 @@ public class MainApp {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("opened a new checklist window");
-                new clistWindow(lastItem, checklists.get(lastItemIndex));
+                new clistWindow(lastItem, manager.checklists.get(lastItemIndex));
+            }
+        });
+
+        //loading a checklist file
+        loadButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FileDialog loadDialog = new FileDialog(f, "select file",0);
+                loadDialog.setVisible(true);
+
+                String a = loadDialog.getFile();
+                File load = new File(a);
+
+                MainApp.manager.removeAll();
+                MainApp.manager.loadFromFile(load);
+                MainApp.loadManager();
+            }
+        });
+
+        //saving checklists
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                FileDialog saveDialog = new FileDialog(f, "select file",1);
+                saveDialog.setVisible(true);
+
+
+                String a = saveDialog.getFile();
+                if (!a.contains(".txt")){
+                    a = a + ".txt";
+                }
+
+                //TODO overwrite save if file not created, (make a writer with false)
+                try {
+                    File save = new File(a);
+                    if (save.createNewFile()){
+                        MainApp.manager.writeToFile(save);
+                    }
+                    else{
+                        System.out.println("didn't create new file");
+                        FileWriter clear = new FileWriter(save.getAbsolutePath(), false);
+                        clear.write("");
+                        clear.close();
+
+                        MainApp.manager.writeToFile(save);
+                    }
+
+                } catch(IOException ie){
+                    ie.printStackTrace();
+                }
             }
         });
 
@@ -91,6 +157,16 @@ public class MainApp {
         });
 
         f.setVisible(true);
+    }
+
+    public static void loadManager(){
+        MainApp.cl_list.removeAll();
+
+
+        for (clist c : MainApp.manager.checklists){
+            MainApp.cl_list.add(c.name);
+        }
+        MainApp.cl_list.validate();
     }
 }
 
@@ -123,7 +199,7 @@ class NewClistWindow extends Frame{
             }
         });
 
-        // adding new checklist
+        // adding new checklist (confirm)
         confirmButton.addActionListener(new ActionListener(){
             @Override
             public void actionPerformed(ActionEvent e){
@@ -139,7 +215,9 @@ class NewClistWindow extends Frame{
 
                 // add a new clist instance and update the list in the main window
                 MainApp.cl_list.add(tf.getText().trim());
-                MainApp.checklists.add(new clist(MainApp.cl_list.getItem(MainApp.cl_list.getItemCount() - 1)));
+
+                clist ch = new clist(MainApp.cl_list.getItem(MainApp.cl_list.getItemCount() - 1));
+                MainApp.manager.addClist(ch);
                 dispose();
             }
         });
@@ -190,7 +268,7 @@ class clistWindow extends Frame{
         this.add(t);
 
         //loading in items from the checklist
-        this.loadItems();
+        this.loadItems(selClist, chPanel);
 
         //defining button behaviours
         //closing window
@@ -235,12 +313,12 @@ class clistWindow extends Frame{
                         @Override
                         public void itemStateChanged(ItemEvent e) {
                             i.check();
-                            System.out.println(i.name +  "has been checked");
+                            System.out.println(i.name +  " has been checked");
                         }
                     });
                     chPanel.add(cbox);
-                    chPanel.revalidate();
                 }
+                chPanel.revalidate();
             }
         });
 
@@ -248,10 +326,27 @@ class clistWindow extends Frame{
     }
 
 
-    /** Loads in items from selected checklist
-     *
+    /** Loads items from selected checklist {@code selClist}, into the selected panel, {@code p}
+     *  Precondition: names in {@code selClist} have been trimmed
      */
-    private void loadItems(){
+    private void loadItems(clist selClist, Panel p){
 
+        p.removeAll();
+        for (item i : selClist.items){
+            Checkbox cbox = new Checkbox(i.name);
+            if (i.checked){
+                cbox.setState(true);
+            }
+
+            cbox.addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    i.check();
+                    System.out.println(i.name +  " has been checked");
+                }
+            });
+            p.add(cbox);
+        }
+        p.revalidate();
     }
 }
