@@ -34,12 +34,20 @@ public class ClistManager {
         return true;
     }
 
-    public clist findChecklist(String name){
-        return new clist("");
-    }
+    /** Returns an arraylist of checklists with item names containing the string {@code name}.
+     *
+     * @param name name of the item
+     * @return an array of checklists with items containing {@code name}, if such items exist. Returns an empty array otherwise.
+     */
+    public ArrayList<clist> findClist(String name){
+        ArrayList<clist> checklists = new ArrayList();
+        for (clist c : this.checklists){
+            if (c.containsString(name)){
+                checklists.add(c);
+            }
+        }
 
-    public item findItem(String name){
-        return new item("");
+        return checklists;
     }
 
     public void loadFromFile(File f){
