@@ -68,4 +68,11 @@ public class clist {
         }
         return new item("");
     }
+
+    /** Loads checklist and all items from a text file
+     *
+     */
+    public void loadFromFile(){
+
+    }
 }
