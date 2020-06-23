@@ -41,6 +41,13 @@ public class MainApp {
         delButton.setBounds(WINDOW_WIDTH/2 - 140, WINDOW_HEIGHT/12, 100, 30);
         f.add(delButton);
 
+
+        //search by keyword button
+        Button searchButton = new Button("Search item");
+        searchButton.setBounds(WINDOW_WIDTH/2 - 30, WINDOW_HEIGHT/12, 100, 30);
+        f.add(searchButton);
+
+
         //load from file button
         Button loadButton = new Button("Load");
         loadButton.setBounds(WINDOW_WIDTH - WINDOW_WIDTH/4 -40, WINDOW_HEIGHT/12, 70, 30);
@@ -55,6 +62,11 @@ public class MainApp {
         cl_list.setBounds(WINDOW_WIDTH/2 - WINDOW_WIDTH*7/16, 100, WINDOW_WIDTH*7/8, WINDOW_HEIGHT*6/7);
         cl_list.isMultipleMode();
         f.add(cl_list);
+
+        //search bar
+        TextField searchField = new TextField();
+        searchField.setBounds(WINDOW_WIDTH / 2 - 125, WINDOW_HEIGHT / 23, 250, 20);
+        f.add(searchField);
 
         //defining button behaviour
         //clicking add checklist button
@@ -122,7 +134,6 @@ public class MainApp {
                     a = a + ".txt";
                 }
 
-                //TODO overwrite save if file not created, (make a writer with false)
                 try {
                     File save = new File(a);
                     if (save.createNewFile()){
@@ -139,6 +150,19 @@ public class MainApp {
 
                 } catch(IOException ie){
                     ie.printStackTrace();
+                }
+            }
+        });
+
+        //searching for an item
+        searchButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (searchField.getText().trim().length() != 0){
+                    ArrayList<clist> searchlist = manager.findClist(searchField.getText().trim());
+                    for (clist c : searchlist){
+                        new clistWindow(c.name, c);
+                    }
                 }
             }
         });
@@ -179,13 +203,14 @@ class NewClistWindow extends Frame{
         setSize(300,150);
         this.setTitle("Add New Checklist");
 
+        TextField tf = new TextField();
+        tf.setBounds(300/2 -75,40, 150, 20);
+        tf.setCaretPosition(0);
+        add(tf);
+
         Button confirmButton = new Button("Confirm");
         confirmButton.setBounds(300/2 - 35, 80, 70, 35);
         add(confirmButton);
-
-        TextField tf = new TextField(1);
-        tf.setBounds(300/2 -75,40, 150, 20);
-        add(tf);
 
         setLayout(null);
         setVisible(true);
@@ -246,7 +271,6 @@ class clistWindow extends Frame{
         //instantiating buttons
         Button newItemButton = new Button("add");
         Button delChecked = new Button("remove checked");
-        Button searchButton = new Button("search item");
 
         //text field
         TextField itemField = new TextField();
@@ -258,7 +282,6 @@ class clistWindow extends Frame{
         bPanel.setBounds(10,70, 380, 40);
         bPanel.add(newItemButton);
         bPanel.add(delChecked);
-        bPanel.add(searchButton);
         this.add(bPanel);
 
         //checkbox scrollpane

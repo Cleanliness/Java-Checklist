@@ -69,10 +69,15 @@ public class clist {
         return new item("");
     }
 
-    /** Loads checklist and all items from a text file
-     *
+    /** Determines if there exists an item in the checklist containing the string {@code name}
+     * @param name the string that is being searched for
      */
-    public void loadFromFile(){
-
+    public boolean containsString(String name){
+        for (item i: this.items){
+            if (i.name.contains(name)){
+                return true;
+            }
+        }
+        return false;
     }
 }
